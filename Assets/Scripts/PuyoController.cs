@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class PuyoController : MonoBehaviour {
 
-    public GameObject[] puyo;
+    public GameObject[] blocks;
     public bool OnGround;
-    float place = 1.0f;
+    //float place = 1.0f;
     float PuyoCreateTime = 0;
 
 
@@ -29,7 +29,8 @@ public class PuyoController : MonoBehaviour {
     }
     void CreatePuyo()
     {
-        Vector3 enemyAppearPosition = new Vector3(2*Random.Range(-2,3), 20, 0);
-        Instantiate(puyo[0], enemyAppearPosition, Quaternion.identity);
+        GameObject nextBlock = blocks[Random.Range(0, 3)];
+        Vector3 enemyAppearPosition = new Vector3(2*Random.Range(-5,6), 20, 0);
+        Instantiate(nextBlock, enemyAppearPosition, Quaternion.identity);
     }
 }
