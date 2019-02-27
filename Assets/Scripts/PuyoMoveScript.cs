@@ -4,22 +4,22 @@ using UnityEngine;
 
 public class PuyoMoveScript : MonoBehaviour {
 
-    float PuyoCreateTime;
+    float generalTime;
     int[,] stageArray = new int[15, 10]; //ステージの元となる二次元配列初期値は全て0
-    GameObject[,] stageObjects = new GameObject[15, 10];
+    //最初にレンダーするブロック群
     public GameObject groundObj;
     public GameObject blockObj;
     public GameObject transparentObj;
 
-
-    //ブロックの名前と左上の座標位置で空間を決定する。
+    //ブロックの名前と左上の座標位置で空間を決定する。(重要)
     int[] indexPosition;//ブロックの左上の二次元座標
-    string movingBlockName = "";//ブロックの名前とこの座標位置で空間を決定する。
+    string movingBlockName;//ブロックの名前とこの座標位置で空間を決定する。
 
+    //ブロックの変数格納
     string yokonaga = "yokonaga";
     string tatenaga = "tatenaga";
-    //string mashikaku = "mashikaku";
-    //string zshape = "zshape";
+    string mashikaku = "mashikaku";
+    string zshape = "zshape";
 
     // Use this for initialization
     void Start () {
@@ -30,24 +30,17 @@ public class PuyoMoveScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        PuyoCreateTime += Time.deltaTime;
-
-        if (PuyoCreateTime > 0.5f)
+        generalTime += Time.deltaTime;
+        if (generalTime > 0.5f)
         {
-            //Debug.Log("ブロック一つ目");
             DropBlock(indexPosition);
-            PuyoCreateTime = 0;
-        }
-        //if (movingBlockName == yokonaga)
-        //{
-        //    YokonagaBlockMove();
-        //}
-        if (movingBlockName == tatenaga)
-        {
-            TatenagaBlockMove();
+            generalTime = 0;
         }
 
+        BlockMove();
     }
+
+    //ブロックを落とせるかどうかの判定(関数名変更したい)
     void DropBlock(int[] index)
     {
         bool canDrop = true;
@@ -81,12 +74,9 @@ public class PuyoMoveScript : MonoBehaviour {
             
             if (canDrop)
             {
-                stageArray[index[0], index[1]] = 0;
-                stageArray[index[0]+4, index[1]] = 1;
-                GameObject target = GameObject.Find("Block" + index[0].ToString() + index[1].ToString() + "(Clone)");
-                target.GetComponent<Renderer>().material.color = Color.white;
-                target = GameObject.Find("Block" + (index[0]+4).ToString() + index[1].ToString()+ "(Clone)");
-                target.GetComponent<Renderer>().material.color = Color.blue;
+                int[,] fromArgument = { { index[0], index[1] } };
+                int[,] toArgument = { { index[0] + 4, index[1] } };
+                ChangeStatus(toArgument, fromArgument);
             }
         }
         indexPosition[0] ++;
@@ -99,77 +89,108 @@ public class PuyoMoveScript : MonoBehaviour {
     void InstantiateNextBlock()
     {
         movingBlockName = tatenaga;
-        int aaaaaaa = Random.Range(0, 6);
-        indexPosition = new int[2] { 0, aaaaaaa};
+        int startPoint = Random.Range(0, 6);
+        indexPosition = new int[2] { 0, startPoint};
+        int[,] toArgument = { };
 
-        if (movingBlockName == tatenaga) {
-            GameObject target = GameObject.Find("Block0" + aaaaaaa.ToString() + "(Clone)");
-            target.GetComponent<Renderer>().material.color = Color.blue;
-            target = GameObject.Find("Block1" + aaaaaaa.ToString() + "(Clone)");
-            target.GetComponent<Renderer>().material.color = Color.blue;
-            target = GameObject.Find("Block2" + aaaaaaa.ToString() + "(Clone)");
-            target.GetComponent<Renderer>().material.color = Color.blue;
-            target = GameObject.Find("Block3" + aaaaaaa.ToString() + "(Clone)");
-            target.GetComponent<Renderer>().material.color = Color.blue;
+        if (movingBlockName == tatenaga)
+        {
+            toArgument = new int[,]
+            {
+                { 0, startPoint }, { 1, startPoint },
+                { 2, startPoint }, { 3, startPoint }
+            };
         }
-
+        //それぞれの動きを実装
+        //if (movingBlockName == yokonaga)
+        //{
+        //    toArgument = new int[,]
+        //    {
+        //        { 0, startPoint }, { 1, startPoint },
+        //        { 2, startPoint }, { 3, startPoint }
+        //    };
+        //}
+        //if (movingBlockName == mashikaku)
+        //{
+        //    toArgument = new int[,]
+        //    {
+        //        { 0, startPoint }, { 1, startPoint },
+        //        { 2, startPoint }, { 3, startPoint }
+        //    };
+        //}
+        //if (movingBlockName == zshape)
+        //{
+        //    toArgument = new int[,]
+        //    {
+        //        { 0, startPoint }, { 1, startPoint },
+        //        { 2, startPoint }, { 3, startPoint }
+        //    };
+        //}
+        ChangeStatus(toArgument, new int[,] { });
     }
 
-    void YokonagaBlockMove()
-    {
-        if (Input.GetKeyDown("left"))
-        {
-            ConvertBlock(-1, yokonaga);
-        }
-        if (Input.GetKeyDown("right"))
-        {
-            ConvertBlock(1, yokonaga);
-        }
-    }
-
-    void TatenagaBlockMove()
+    //外部からの入力への対応
+    void BlockMove()
     {
         if (Input.GetKeyDown("left"))
         {
             Debug.Log("left");
-            ConvertBlock(-1, tatenaga);
+            ConvertBlock(-1);
         }
         if (Input.GetKeyDown("right"))
         {
             Debug.Log("right");
-            ConvertBlock(1, tatenaga);
+            ConvertBlock(1);
         }
     }
-    void ChangeColor() 
-    {
 
+    //ブロックのデータと見た目を更新
+    void ChangeStatus(int[,] toAddress, int[,] fromAddress) 
+    {
+        GameObject target;
+        for (int i=0; i<toAddress.GetLength(0); i++)
+        {
+            stageArray[toAddress[i, 0], toAddress[i,1]] = 1;
+            target = GameObject.Find("Block" + toAddress[i,0].ToString() + toAddress[i,1].ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.blue;
+        }
+
+        for (int i = 0; i < fromAddress.GetLength(0); i++)
+        {
+            stageArray[fromAddress[i, 0], fromAddress[i, 1]] = 0;
+            target = GameObject.Find("Block" + fromAddress[i, 0].ToString() + fromAddress[i, 1].ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.white;
+        }
     }
 
-
-    void ConvertBlock(int moveWay, string blockName)
+    //ブロックを左右に移動できるかどうかの判定
+    void ConvertBlock(int moveWay)
     {
-
-        if ( blockName == yokonaga)
+        if (movingBlockName == yokonaga)
         {
             if (moveWay + indexPosition[1] > 0 && moveWay + indexPosition[1]+3 < 10)
             {
                 if (moveWay == -1 && stageArray[indexPosition[0], indexPosition[1] -1] != 1)
                 {
-                    stageArray[indexPosition[0], indexPosition[1]-1] = 1;
-                    stageArray[indexPosition[0], indexPosition[1] + 3] = 0;
+                    //stageArray[indexPosition[0], indexPosition[1]-1] = 1;
+                    //stageArray[indexPosition[0], indexPosition[1] + 3] = 0;
+                    int[,] toArgument = { { indexPosition[0], indexPosition[1] - 1 } };
+                    int[,] fromArgument = { { indexPosition[0], indexPosition[1] + 3 } };
+                    ChangeStatus(toArgument, fromArgument);
                 }
                 if (moveWay == 1 && stageArray[indexPosition[0], indexPosition[1] + 4] != 1)
                 {
-                    stageArray[indexPosition[0], indexPosition[1]] = 0;
-                    stageArray[indexPosition[0], indexPosition[1] + 4] = 1;
+                    //stageArray[indexPosition[0], indexPosition[1] + 4] = 1;
+                    //stageArray[indexPosition[0], indexPosition[1]] = 0;
+                    int[,] toArgument = { { indexPosition[0], indexPosition[1] + 4 } };
+                    int[,] fromArgument = { { indexPosition[0], indexPosition[1] } };
+                    ChangeStatus(toArgument, fromArgument);
                 }
             }
         }
 
-        if (blockName == tatenaga)
+        if (movingBlockName == tatenaga)
         {
-            //Debug.Log(moveWay.ToString() + indexPosition[1].ToString() + "次のインデックス");
-            //Debug.Log(indexPosition[0]);
             if (moveWay + indexPosition[1] >= 0 && moveWay + indexPosition[1] < 10)
             {
                 bool canMove = true;
@@ -185,37 +206,17 @@ public class PuyoMoveScript : MonoBehaviour {
                 {
                     for (int i = 0; i < 4; i++)
                     {
-                        stageArray[indexPosition[0] + i, moveWay + indexPosition[1]] = 1;
-                        stageArray[indexPosition[0] + i, indexPosition[1]] = 0;
-                        //Debug.Log((indexPosition[0] + i).ToString()+ indexPosition[1].ToString());
-                        GameObject target = GameObject.Find("Block" + (indexPosition[0] + i).ToString() + (moveWay + indexPosition[1]).ToString() + "(Clone)");
-                        target.GetComponent<Renderer>().material.color = Color.blue;
-                        target = GameObject.Find("Block" + (indexPosition[0] + i).ToString() + indexPosition[1].ToString() + "(Clone)");
-                        target.GetComponent<Renderer>().material.color = Color.white;
+                        int[,] toArgument = { { indexPosition[0] + i, moveWay + indexPosition[1] } };
+                        int[,] fromArgument = { { indexPosition[0] + i, indexPosition[1] } };
+                        ChangeStatus(toArgument,fromArgument);
                     }
                     indexPosition[1] += moveWay;
                 }
-
             }
         }
     }
 
-
-    void DestroyBlock()
-    {
-        for (int i = 0; i < stageArray.GetLength(0); i++)
-        {
-            for (int j = 0; j < stageArray.GetLength(1); j++)
-            {
-                if (stageArray[i, j] == 1)
-                {
-
-                }
-            }
-        }
-    }
-
-
+    //ブロックの初期状態
     int[,] StageImage()
     {
         int[,] intImage = new int[,] {
@@ -244,15 +245,14 @@ public class PuyoMoveScript : MonoBehaviour {
         //Debug.Log("[14,9]" + intImage[14,9].ToString());//右下
         //Debug.Log(intImage.GetLength(0));
         //Debug.Log(intImage.GetLength(1));
-        return intImage;
-    }
-    void RenderBlock()
-    {
-        //Debug.Log(stageObjects.GetLength(0));
-        //Debug.Log(stageObjects.GetLength(1));
         //Debug.Log(stageArray.GetLength(0));
         //Debug.Log(stageArray.GetLength(1));
+        return intImage;
+    }
 
+    //初期値のレンダー
+    void RenderBlock()
+    {
         for (int i = 0; i < stageArray.GetLength(0); i++)
         {
             for (int j = 0; j < stageArray.GetLength(1); j++)
@@ -269,7 +269,6 @@ public class PuyoMoveScript : MonoBehaviour {
                 }
                 nextBlock.name = "Block" + i.ToString() + j.ToString();
                 Instantiate(nextBlock, blockPosition, Quaternion.identity);
-                stageObjects[i, j] = nextBlock;
             }
         }
     }
