@@ -5,8 +5,12 @@ using UnityEngine;
 public class PuyoMoveScript : MonoBehaviour {
 
     float PuyoCreateTime;
-    int[,] stageArray = new int[10, 15]; //ステージの元となる二次元配列初期値は全て0
-    public GameObject prefabObj;
+    int[,] stageArray = new int[15, 10]; //ステージの元となる二次元配列初期値は全て0
+    GameObject[,] stageObjects = new GameObject[15, 10];
+    public GameObject groundObj;
+    public GameObject blockObj;
+    public GameObject transparentObj;
+
 
     //ブロックの名前と左上の座標位置で空間を決定する。
     int[] indexPosition;//ブロックの左上の二次元座標
@@ -19,7 +23,8 @@ public class PuyoMoveScript : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        StageImage();
+        stageArray = StageImage();
+        RenderBlock();
         InstantiateNextBlock();
     }
 	
@@ -27,15 +32,16 @@ public class PuyoMoveScript : MonoBehaviour {
 	void Update () {
         PuyoCreateTime += Time.deltaTime;
 
-        if (PuyoCreateTime > 0.3f)
+        if (PuyoCreateTime > 0.5f)
         {
+            //Debug.Log("ブロック一つ目");
             DropBlock(indexPosition);
             PuyoCreateTime = 0;
         }
-        if (movingBlockName == yokonaga)
-        {
-            YokonagaBlockMove();
-        }
+        //if (movingBlockName == yokonaga)
+        //{
+        //    YokonagaBlockMove();
+        //}
         if (movingBlockName == tatenaga)
         {
             TatenagaBlockMove();
@@ -64,6 +70,25 @@ public class PuyoMoveScript : MonoBehaviour {
                 }
             }
         }
+
+        if (movingBlockName == tatenaga)
+        {
+
+            if (stageArray[index[0] + 4, index[1]] == 1)
+            {
+                canDrop = false;
+            }
+            
+            if (canDrop)
+            {
+                stageArray[index[0], index[1]] = 0;
+                stageArray[index[0]+4, index[1]] = 1;
+                GameObject target = GameObject.Find("Block" + index[0].ToString() + index[1].ToString() + "(Clone)");
+                target.GetComponent<Renderer>().material.color = Color.white;
+                target = GameObject.Find("Block" + (index[0]+4).ToString() + index[1].ToString()+ "(Clone)");
+                target.GetComponent<Renderer>().material.color = Color.blue;
+            }
+        }
         indexPosition[0] ++;
         if (!canDrop)
         {
@@ -74,7 +99,20 @@ public class PuyoMoveScript : MonoBehaviour {
     void InstantiateNextBlock()
     {
         movingBlockName = tatenaga;
-        indexPosition = new int[] { 0, Random.Range(0, 6)};
+        int aaaaaaa = Random.Range(0, 6);
+        indexPosition = new int[2] { 0, aaaaaaa};
+
+        if (movingBlockName == tatenaga) {
+            GameObject target = GameObject.Find("Block0" + aaaaaaa.ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.blue;
+            target = GameObject.Find("Block1" + aaaaaaa.ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.blue;
+            target = GameObject.Find("Block2" + aaaaaaa.ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.blue;
+            target = GameObject.Find("Block3" + aaaaaaa.ToString() + "(Clone)");
+            target.GetComponent<Renderer>().material.color = Color.blue;
+        }
+
     }
 
     void YokonagaBlockMove()
@@ -93,19 +131,24 @@ public class PuyoMoveScript : MonoBehaviour {
     {
         if (Input.GetKeyDown("left"))
         {
+            Debug.Log("left");
             ConvertBlock(-1, tatenaga);
         }
         if (Input.GetKeyDown("right"))
         {
+            Debug.Log("right");
             ConvertBlock(1, tatenaga);
         }
+    }
+    void ChangeColor() 
+    {
+
     }
 
 
     void ConvertBlock(int moveWay, string blockName)
     {
-        //bool canMove = false;
-        //int indexPosition[0] = 0;
+
         if ( blockName == yokonaga)
         {
             if (moveWay + indexPosition[1] > 0 && moveWay + indexPosition[1]+3 < 10)
@@ -125,6 +168,8 @@ public class PuyoMoveScript : MonoBehaviour {
 
         if (blockName == tatenaga)
         {
+            //Debug.Log(moveWay.ToString() + indexPosition[1].ToString() + "次のインデックス");
+            //Debug.Log(indexPosition[0]);
             if (moveWay + indexPosition[1] > 0 && moveWay + indexPosition[1] < 10)
             {
                 bool canMove = true;
@@ -141,28 +186,20 @@ public class PuyoMoveScript : MonoBehaviour {
                     for (int i = 0; i < 4; i++)
                     {
                         stageArray[indexPosition[0] + i, moveWay + indexPosition[1]] = 1;
+                        stageArray[indexPosition[0] + i, indexPosition[1]] = 0;
+                        //Debug.Log((indexPosition[0] + i).ToString()+ indexPosition[1].ToString());
+                        GameObject target = GameObject.Find("Block" + (indexPosition[0] + i).ToString() + (moveWay + indexPosition[1]).ToString() + "(Clone)");
+                        target.GetComponent<Renderer>().material.color = Color.blue;
+                        target = GameObject.Find("Block" + (indexPosition[0] + i).ToString() + indexPosition[1].ToString() + "(Clone)");
+                        target.GetComponent<Renderer>().material.color = Color.white;
                     }
+                    indexPosition[1] += moveWay;
                 }
 
             }
         }
-        indexPosition[1] += moveWay;
     }
 
-    void RenderBlock()
-    {
-        for (int i =0; i<stageArray.GetLength(0); i++)
-        {
-            for (int j = 0; j < stageArray.GetLength(1); j++)
-            {
-                if (stageArray[i,j] == 1)
-                {
-                    Vector3 blockPosition = new Vector3(i,j,0);
-                    Instantiate(prefabObj, blockPosition, Quaternion.identity);
-                }
-            }
-        }
-    }
 
     void DestroyBlock()
     {
@@ -172,37 +209,69 @@ public class PuyoMoveScript : MonoBehaviour {
             {
                 if (stageArray[i, j] == 1)
                 {
-                    Vector3 blockPosition = new Vector3(i, j, 0);
-                    Instantiate(prefabObj, blockPosition, Quaternion.identity);
+
                 }
             }
         }
     }
 
 
-    void StageImage()
+    int[,] StageImage()
     {
         int[,] intImage = new int[,] {
-            { 3, 1, 1, 1, 1, 1, 1, 1, 1, 4 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            //ここより上が新しいブロックの出現位置になる。
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 2 }
+            //ここよ0上が新しいブロックの出現位置になる。
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			  
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            //{ -1,-1,-1,-1,-1,-1,-1,-1,-1,- 1}
+            { 1,1,1,1,1,1,1,1,1,1}
         };
-        Debug.Log("[0,0]" + intImage[0,0].ToString());//3
-        Debug.Log("[0,10]" + intImage[0,10].ToString());//4
-        Debug.Log("[14,0]" + intImage[14,0].ToString());//1
-        Debug.Log("[14,14]" + intImage[14,14].ToString());//2
+        //Debug.Log("[0,0]" + intImage[0,0].ToString());//左上
+        //Debug.Log("[0,9]" + intImage[0,9].ToString());//右上
+        //Debug.Log("[14,0]" + intImage[14,0].ToString());//左下
+        //Debug.Log("[14,9]" + intImage[14,9].ToString());//右下
+        //Debug.Log(intImage.GetLength(0));
+        //Debug.Log(intImage.GetLength(1));
+        return intImage;
     }
+    void RenderBlock()
+    {
+        //Debug.Log(stageObjects.GetLength(0));
+        //Debug.Log(stageObjects.GetLength(1));
+        //Debug.Log(stageArray.GetLength(0));
+        //Debug.Log(stageArray.GetLength(1));
+
+        for (int i = 0; i < stageArray.GetLength(0); i++)
+        {
+            for (int j = 0; j < stageArray.GetLength(1); j++)
+            {
+                Vector3 blockPosition = new Vector3(j, i, 0);
+                GameObject nextBlock = transparentObj;
+                if (stageArray[i, j] == -1)
+                {
+                    nextBlock = groundObj;
+                }
+                if (stageArray[i, j] == 1)
+                {
+                    nextBlock = blockObj;
+                }
+                nextBlock.name = "Block" + i.ToString() + j.ToString();
+                Instantiate(nextBlock, blockPosition, Quaternion.identity);
+                stageObjects[i, j] = nextBlock;
+            }
+        }
+    }
+
 }
