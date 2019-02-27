@@ -170,7 +170,7 @@ public class PuyoMoveScript : MonoBehaviour {
         {
             //Debug.Log(moveWay.ToString() + indexPosition[1].ToString() + "次のインデックス");
             //Debug.Log(indexPosition[0]);
-            if (moveWay + indexPosition[1] > 0 && moveWay + indexPosition[1] < 10)
+            if (moveWay + indexPosition[1] >= 0 && moveWay + indexPosition[1] < 10)
             {
                 bool canMove = true;
                 for (int i = 0; i < 4; i++)
