@@ -58,8 +58,9 @@ public class PuyoMoveScript : MonoBehaviour {
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    stageArray[index[0] + 1, index[1] + i] = 1;
-                    stageArray[index[0], index[1] + i] = 0;
+                    int[,] fromArgument = { { index[0], index[1] + i } };
+                    int[,] toArgument = { { index[0] + 1, index[1] + i } };
+                    ChangeStatus(toArgument, fromArgument);
                 }
             }
         }
@@ -88,7 +89,7 @@ public class PuyoMoveScript : MonoBehaviour {
 
     void InstantiateNextBlock()
     {
-        movingBlockName = tatenaga;
+        movingBlockName = yokonaga;
         int startPoint = Random.Range(0, 6);
         indexPosition = new int[2] { 0, startPoint};
         int[,] toArgument = { };
@@ -102,14 +103,14 @@ public class PuyoMoveScript : MonoBehaviour {
             };
         }
         //それぞれの動きを実装
-        //if (movingBlockName == yokonaga)
-        //{
-        //    toArgument = new int[,]
-        //    {
-        //        { 0, startPoint }, { 1, startPoint },
-        //        { 2, startPoint }, { 3, startPoint }
-        //    };
-        //}
+        if (movingBlockName == yokonaga)
+        {
+            toArgument = new int[,]
+            {
+                { 0, startPoint }, { 0, startPoint +1 },
+                { 0, startPoint +2 }, { 0, startPoint +3 }
+            };
+        }
         //if (movingBlockName == mashikaku)
         //{
         //    toArgument = new int[,]
@@ -168,23 +169,21 @@ public class PuyoMoveScript : MonoBehaviour {
     {
         if (movingBlockName == yokonaga)
         {
-            if (moveWay + indexPosition[1] > 0 && moveWay + indexPosition[1]+3 < 10)
+            if (moveWay + indexPosition[1] >= 0 && moveWay + indexPosition[1]+3 < 10)
             {
                 if (moveWay == -1 && stageArray[indexPosition[0], indexPosition[1] -1] != 1)
                 {
-                    //stageArray[indexPosition[0], indexPosition[1]-1] = 1;
-                    //stageArray[indexPosition[0], indexPosition[1] + 3] = 0;
                     int[,] toArgument = { { indexPosition[0], indexPosition[1] - 1 } };
                     int[,] fromArgument = { { indexPosition[0], indexPosition[1] + 3 } };
                     ChangeStatus(toArgument, fromArgument);
+                    indexPosition[1] += moveWay;
                 }
                 if (moveWay == 1 && stageArray[indexPosition[0], indexPosition[1] + 4] != 1)
                 {
-                    //stageArray[indexPosition[0], indexPosition[1] + 4] = 1;
-                    //stageArray[indexPosition[0], indexPosition[1]] = 0;
                     int[,] toArgument = { { indexPosition[0], indexPosition[1] + 4 } };
                     int[,] fromArgument = { { indexPosition[0], indexPosition[1] } };
                     ChangeStatus(toArgument, fromArgument);
+                    indexPosition[1] += moveWay;
                 }
             }
         }
