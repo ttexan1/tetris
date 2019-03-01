@@ -25,6 +25,7 @@ public class GameManagerScript : MonoBehaviour {
     const string lShapeRight = "lShapeRight";
     const string lShapeLeft = "lShapeLeft";
     const string convex = "convex";
+    bool onUpdatingBoard = true; //見た目のために使用！後で修正
 
     //格形の動き方や状態をまとめたスクリプトに分ける。
     SeriesScript seriesScript;
@@ -46,14 +47,14 @@ public class GameManagerScript : MonoBehaviour {
         convexScript = gameObject.GetComponent<ConvexScript>();
 
         stageArray = StageImage();
-        RenderBlock();
+        RenderBlock(); 
         InstantiateNextBlock();
     }
 
 	// Update is called once per frame
 	void Update () {
         generalTime += Time.deltaTime;
-        if (generalTime > 0.3f)
+        if (generalTime > 0.2f)
         {
             VerticalMove(indexPosition);
             generalTime = 0;
@@ -112,12 +113,17 @@ public class GameManagerScript : MonoBehaviour {
                 break;
         }
         ChangeStatus(toArgument, new int[,] { });
+        onUpdatingBoard = true;
     }
 
     //垂直方向移動
     void VerticalMove(int[] index)
     {
         bool dropped = true;
+        if (!onUpdatingBoard)
+        {
+            return;
+        }
         switch (movingBlockName)
         {
             case series:
@@ -144,11 +150,13 @@ public class GameManagerScript : MonoBehaviour {
             default:
                 break;
         }
-
         indexPosition[0]++;
         if (!dropped)
         {
-            InstantiateNextBlock();
+            onUpdatingBoard = false;
+            DeleteFilledLine();
+            Invoke("InstantiateNextBlock", 0.2f);//DeleteFilledLine()のRender処理のせい => 改善しないと
+            //InstantiateNextBlock();
         }
     }
 
@@ -227,7 +235,7 @@ public class GameManagerScript : MonoBehaviour {
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            //{ -1,-1,-1,-1,-1,-1,-1,-1,-1,- 1}
+            //{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
         };
         //Debug.Log("[0,0]" + intImage[0,0].ToString());//左上
@@ -250,11 +258,11 @@ public class GameManagerScript : MonoBehaviour {
             {
                 Vector3 blockPosition = new Vector3(j, i, 0);
                 GameObject nextBlock = transparentObj;
-                if (stageArray[i, j] == -1)
+                if (stageArray[i, j] == -1 || i == 14)
                 {
                     nextBlock = groundObj;
                 }
-                if (stageArray[i, j] == 1)
+                else if (stageArray[i, j] == 1)
                 {
                     nextBlock = blockObj;
                 }
@@ -264,4 +272,63 @@ public class GameManagerScript : MonoBehaviour {
         }
     }
 
+    //即席で作ったのであまりよくない
+    void DeleteFilledLine()
+    {
+        var map = new Dictionary<int, bool>();
+        for (int i = stageArray.GetLength(0)-2; i >= 0; i--)
+        {
+            bool isFilled = true;
+            for (int j = 0; j < stageArray.GetLength(1); j++)
+            {
+                if (stageArray[i,j] != 1)
+                {
+                    isFilled = false;
+                    break;
+                }
+            }
+            map.Add(i, isFilled);
+        }
+        int deletingLineCount = 0;
+        var deleteList = new Dictionary<int, int>();
+        for (int i = stageArray.GetLength(0)-2; i >= 0; i--)
+        {
+            if (map[i])
+            {
+                int[,] fromValue = 
+                {
+                    { i, 0 }, { i, 1 }, { i, 2 },
+                    { i, 3 }, { i, 4 }, { i, 5 },
+                    { i, 6 }, { i, 7 }, { i, 8 },
+                };
+                ChangeStatus(new int[,]{ }, fromValue);
+                deletingLineCount++;
+                deleteList.Add(i, 0);
+            }
+            else
+            {
+                deleteList.Add(i, deletingLineCount);
+            }
+        }
+        for (int i = stageArray.GetLength(0)-2; i >= 0; i--)
+        {
+            if (deleteList[i] != 0)
+            {
+                for (int j = 0; j < stageArray.GetLength(1); j++)
+                {
+                    //ポインタでうまくいかない可能性あり。
+                    stageArray[i + deleteList[i], j] = stageArray[i, j];
+                }
+
+            }
+        }
+        for (int i = 0; i < stageArray.GetLength(0); i++)
+        {
+            for (int j = 0; j < stageArray.GetLength(1); j++)
+            {
+                Destroy(GameObject.Find("Block" + i.ToString() + j.ToString() + "(Clone)"));
+            }
+        }
+        RenderBlock();
+    }
 }
