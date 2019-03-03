@@ -79,8 +79,8 @@ public class GameManagerScript : MonoBehaviour {
 
     void InstantiateNextBlock()
     {
-        string[] implementedBlocks = { series, lShapeRight };
-        movingBlockName = implementedBlocks[Random.Range(0, 2)];
+        string[] implementedBlocks = { series, lShapeRight ,square };
+        movingBlockName = implementedBlocks[Random.Range(0, 3)];
         int startPoint = Random.Range(2, 7);
         indexPosition = new int[2] { 0, startPoint};
         int[,] toArgument = { };
