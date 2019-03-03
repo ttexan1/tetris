@@ -79,8 +79,9 @@ public class GameManagerScript : MonoBehaviour {
 
     void InstantiateNextBlock()
     {
-        movingBlockName = series;
-        int startPoint = Random.Range(0, 6);
+        string[] implementedBlocks = { series, lShapeRight };
+        movingBlockName = implementedBlocks[Random.Range(0, 2)];
+        int startPoint = Random.Range(2, 7);
         indexPosition = new int[2] { 0, startPoint};
         int[,] toArgument = { };
 
@@ -101,6 +102,7 @@ public class GameManagerScript : MonoBehaviour {
                 toArgument = zShapeLeftScript.InitialState(angleState, startPoint);
                 break;
             case lShapeRight:
+                angleState = Random.Range(1, 3);
                 toArgument = lShapeRightScript.InitialState(angleState, startPoint);
                 break;
             case lShapeLeft:
